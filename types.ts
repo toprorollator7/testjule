@@ -1,16 +1,7 @@
 export enum UserRole {
   PROVIDER_ADMIN = 'provider_admin',
-  TEAM_MEMBER = 'team_member',
-  CONSUMER = 'consumer',
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole | null; // Null if not selected yet
-  agencyId?: string; // If they belong to an agency
-  avatarUrl?: string;
+  PROVIDER = 'provider',
+  CLIENT = 'client',
 }
 
 export interface Agency {
@@ -19,6 +10,7 @@ export interface Agency {
   name: string;
   subdomain: string; // modeled as unique string
   logoUrl: string;
+
   coverUrl: string;
   description: string;
   contactEmail: string;

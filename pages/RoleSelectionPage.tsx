@@ -1,23 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, Home } from 'lucide-react';
-import { mockApi } from '../lib/mockApi';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { UserRole } from '../types';
 
-interface RoleSelectionPageProps {
-  userId: string;
-  onRoleUpdate: () => void;
-}
-
-export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ userId, onRoleUpdate }) => {
+export const RoleSelectionPage: React.FC = () => {
   const [loading, setLoading] = useState<string | null>(null);
   const navigate = useNavigate();
+  const updateUserRole = useMutation(api.users.updateRole);
 
   const handleSelection = async (role: UserRole) => {
     setLoading(role);
     try {
-      await mockApi.updateUserRole(userId, role);
-      onRoleUpdate(); // Refresh user state in App
+      await updateUserRole({ role });
       if (role === UserRole.PROVIDER_ADMIN) {
         navigate('/dashboard');
       } else {
@@ -55,9 +51,9 @@ export const RoleSelectionPage: React.FC<RoleSelectionPageProps> = ({ userId, on
 
           {/* Consumer Card */}
           <button
-            onClick={() => handleSelection(UserRole.CONSUMER)}
+            onClick={() => handleSelection(UserRole.CLIENT)}
             disabled={!!loading}
-            className={`relative group bg-white p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all text-left ${loading === UserRole.CONSUMER ? 'opacity-70 cursor-wait' : ''}`}
+            className={`relative group bg-white p-8 rounded-2xl shadow-sm border-2 border-transparent hover:border-primary-500 hover:shadow-lg transition-all text-left ${loading === UserRole.CLIENT ? 'opacity-70 cursor-wait' : ''}`}
           >
             <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-green-600 transition-colors">
               <Home className="h-6 w-6 text-green-600 group-hover:text-white" />
