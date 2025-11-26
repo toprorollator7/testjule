@@ -1,16 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { LandingPage } from './pages/LandingPage';
-import { AuthPage } from './pages/AuthPage';
 import { RoleSelectionPage } from './pages/RoleSelectionPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ListingsPage } from './pages/ListingsPage';
 import { ListingDetailPage } from './pages/ListingDetailPage';
 import { AgencyStorefrontPage } from './pages/AgencyStorefrontPage';
-import { mockApi } from './lib/mockApi';
-import { User, UserRole } from './types';
+import { UserRole } from './types';
+import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { useQuery } from 'convex/react';
+import { api } from '../convex/_generated/api';
+import { useUser } from '@workos-inc/authkit-react';
+
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 // Scroll to top helper
 const ScrollToTop = () => {
@@ -21,9 +25,9 @@ const ScrollToTop = () => {
   return null;
 };
 
-const ProtectedRoute = ({ children, user, requiredRole }: { children: React.ReactNode, user: User | null, requiredRole?: UserRole }) => {
+const ProtectedRoute = ({ children, user, requiredRole }: { children: React.ReactNode, user: any, requiredRole?: UserRole }) => {
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/" replace />;
   }
   if (requiredRole && user.role !== requiredRole) {
     return <Navigate to="/" replace />;
@@ -32,20 +36,16 @@ const ProtectedRoute = ({ children, user, requiredRole }: { children: React.Reac
 };
 
 const App = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const checkAuth = async () => {
-    const currentUser = await mockApi.getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
-  };
+  const { user, isLoading } = useUser();
+  const dbUser = useQuery(api.users.get);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
+    if (user && dbUser && !dbUser.role) {
+      window.location.href = '/select-role';
+    }
+  }, [user, dbUser]);
 
-  if (loading) {
+  if (isLoading || dbUser === undefined) {
      return <div className="h-screen w-screen flex items-center justify-center bg-gray-50 text-gray-500">Loading AgentFlow...</div>;
   }
 
@@ -54,17 +54,14 @@ const App = () => {
       <ScrollToTop />
       <div className="flex flex-col min-h-screen">
         <Routes>
-          {/* Auth Pages have no Navbar */}
-          <Route path="/auth" element={<AuthPage onLogin={checkAuth} />} />
-          
           <Route path="/select-role" element={
-            user ? <RoleSelectionPage userId={user.id} onRoleUpdate={checkAuth} /> : <Navigate to="/auth" />
+            user ? <RoleSelectionPage /> : <Navigate to="/" />
           } />
 
           {/* Main Layout Pages */}
           <Route path="*" element={
             <>
-              <Navbar user={user} onLogout={() => setUser(null)} />
+              <Navbar />
               <main className="flex-grow">
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
@@ -73,8 +70,8 @@ const App = () => {
                   <Route path="/agency/:agencyId" element={<AgencyStorefrontPage />} />
                   
                   <Route path="/dashboard" element={
-                    <ProtectedRoute user={user} requiredRole={UserRole.PROVIDER_ADMIN}>
-                      <DashboardPage user={user!} />
+                    <ProtectedRoute user={dbUser} requiredRole={UserRole.PROVIDER_ADMIN}>
+                      <DashboardPage user={dbUser!} />
                     </ProtectedRoute>
                   } />
                 </Routes>
@@ -88,4 +85,12 @@ const App = () => {
   );
 };
 
-export default App;
+const AppWrapper = () => {
+  return (
+    <ConvexProvider client={convex}>
+      <App />
+    </ConvexProvider>
+  )
+}
+
+export default AppWrapper;

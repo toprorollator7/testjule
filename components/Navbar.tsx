@@ -1,26 +1,16 @@
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Building2, Menu, X, User as UserIcon, LogOut } from 'lucide-react';
-import { User, UserRole } from '../types';
-import { mockApi } from '../lib/mockApi';
+import { Link, useLocation } from 'react-router-dom';
+import { Building2, Menu, X, LogOut } from 'lucide-react';
+import { useUser, useSignIn, useSignOut } from '@workos-inc/authkit-react';
 
-interface NavbarProps {
-  user: User | null;
-  onLogout: () => void;
-}
-
-export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
+export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
+  const { user } = useUser();
+  const { signIn } = useSignIn();
+  const { signOut } = useSignOut();
 
-  const handleLogout = async () => {
-    await mockApi.logout();
-    onLogout();
-    navigate('/');
-  };
-
-  const isProvider = user?.role === UserRole.PROVIDER_ADMIN || user?.role === UserRole.TEAM_MEMBER;
+  const isProvider = user?.privateMetadata?.role === "provider_admin";
 
   return (
     <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
@@ -50,28 +40,28 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             {user ? (
               <div className="relative flex items-center gap-4">
-                <span className="text-sm font-medium text-gray-700">Hi, {user.name}</span>
+                <span className="text-sm font-medium text-gray-700">Hi, {user.firstName}</span>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => signOut()}
                   className="p-2 rounded-full text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
                    <LogOut className="h-5 w-5" />
                 </button>
-                {user.avatarUrl && (
-                  <img src={user.avatarUrl} alt="" className="h-8 w-8 rounded-full ring-2 ring-white" />
+                {user.profilePictureUrl && (
+                  <img src={user.profilePictureUrl} alt="" className="h-8 w-8 rounded-full ring-2 ring-white" />
                 )}
               </div>
             ) : (
               <div className="flex items-center gap-4">
-                <Link to="/auth" className="text-sm font-medium text-gray-500 hover:text-gray-900">
+                <button onClick={() => signIn()} className="text-sm font-medium text-gray-500 hover:text-gray-900">
                   Log in
-                </Link>
-                <Link
-                  to="/auth"
+                </button>
+                <button
+                  onClick={() => signIn()}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
                 >
                   Get Started
-                </Link>
+                </button>
               </div>
             )}
           </div>
@@ -105,21 +95,21 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
             {user ? (
               <div className="flex items-center px-4">
                 <div className="flex-shrink-0">
-                  <img className="h-10 w-10 rounded-full" src={user.avatarUrl} alt="" />
+                  <img className="h-10 w-10 rounded-full" src={user.profilePictureUrl} alt="" />
                 </div>
                 <div className="ml-3">
-                  <div className="text-base font-medium text-gray-800">{user.name}</div>
+                  <div className="text-base font-medium text-gray-800">{user.firstName}</div>
                   <div className="text-sm font-medium text-gray-500">{user.email}</div>
                 </div>
-                <button onClick={handleLogout} className="ml-auto flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-500">
+                <button onClick={() => signOut()} className="ml-auto flex-shrink-0 p-1 rounded-full text-gray-400 hover:text-gray-500">
                   <LogOut className="h-6 w-6" />
                 </button>
               </div>
             ) : (
               <div className="mt-3 space-y-1">
-                <Link to="/auth" className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
+                <button onClick={() => signIn()} className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100">
                   Log in / Sign up
-                </Link>
+                </button>
               </div>
             )}
           </div>

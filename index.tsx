@@ -1,15 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './index.css';
+import { AuthProvider } from '@workos-inc/authkit-react';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <AuthProvider
+      clientId={import.meta.env.VITE_WORKOS_CLIENT_ID}
+      domain={import.meta.env.VITE_WORKOS_DOMAIN}
+      redirectUri={window.location.origin}
+    >
+      <App />
+    </AuthProvider>
   </React.StrictMode>
 );
